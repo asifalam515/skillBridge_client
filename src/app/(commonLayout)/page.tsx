@@ -8,7 +8,6 @@ const HomePage = async () => {
     isFeatured: false,
     search: "",
   });
-  console.log(data.tutors);
   return (
     <div>
       <HeroSection></HeroSection>

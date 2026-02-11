@@ -30,7 +30,7 @@ interface Tutor {
   experience: number;
   pricePerHr: number;
   bio?: string;
-  avatar?: string;
+  image?: string;
   isOnline?: boolean;
   isVerified?: boolean;
   languages?: string[];
@@ -68,7 +68,7 @@ const SingleTutorCard = ({
     experience,
     pricePerHr,
     bio,
-    avatar,
+    image,
     isOnline = false,
     isVerified = true,
     languages = [],
@@ -94,7 +94,7 @@ const SingleTutorCard = ({
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
           <Avatar className="h-12 w-12 border-2 border-primary/20">
-            <AvatarImage src={avatar} alt={name} />
+            <AvatarImage src={image} alt={name} />
             <AvatarFallback className="bg-primary/10">
               {name
                 .split(" ")
@@ -173,7 +173,7 @@ const SingleTutorCard = ({
           <div className="flex items-start gap-4">
             <div className="relative">
               <Avatar className="h-16 w-16 border-2 border-primary/20">
-                <AvatarImage src={avatar} alt={name} />
+                <AvatarImage src={image} alt={name} />
                 <AvatarFallback className="bg-primary/10 text-lg">
                   {name
                     .split(" ")
@@ -314,7 +314,7 @@ const SingleTutorCard = ({
             <Button variant="outline" size="sm" asChild>
               <Link href={`/tutors/${id}`}>
                 <MessageSquare className="mr-2 h-4 w-4" />
-                View Profile
+                View Details
               </Link>
             </Button>
 

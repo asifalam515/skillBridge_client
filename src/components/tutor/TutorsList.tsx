@@ -16,6 +16,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { categoriesService } from "@/services/modules/category/category.service";
 import {
   Award,
   Filter,
@@ -52,25 +53,8 @@ interface Filters {
   availability: string[];
   languages: string[];
 }
-
-// Mock data for filters (moved outside component)
-const subjectsList = [
-  "Mathematics",
-  "Physics",
-  "Chemistry",
-  "Biology",
-  "Computer Science",
-  "English",
-  "Spanish",
-  "French",
-  "History",
-  "Economics",
-  "Programming",
-  "Web Development",
-  "Data Science",
-  "Statistics",
-  "Calculus",
-];
+const subject = await categoriesService.getCategories();
+const subjectsList = subject.data.data;
 
 const availabilityList = [
   "Today",
@@ -171,23 +155,23 @@ const FilterPanel = ({
         <div className="space-y-3">
           <Label className="font-medium">Subjects</Label>
           <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
-            {subjectsList.map((subject) => (
-              <div key={subject} className="flex items-center space-x-2">
+            {subjectsList.map((item: any) => (
+              <div key={item.id} className="flex items-center space-x-2">
                 <Checkbox
-                  id={`subject-${subject}`}
-                  checked={filters.subjects.includes(subject)}
+                  id={item.id}
+                  checked={filters.subjects.includes(item.name)}
                   onCheckedChange={(checked) => {
                     const newSubjects = checked
                       ? [...filters.subjects, subject]
-                      : filters.subjects.filter((s) => s !== subject);
+                      : filters.subjects.filter((s) => s !== item.name);
                     onFilterChange("subjects", newSubjects);
                   }}
                 />
                 <Label
-                  htmlFor={`subject-${subject}`}
+                  htmlFor={`subject-${item.name}`}
                   className="text-sm cursor-pointer"
                 >
-                  {subject}
+                  {item.name}
                 </Label>
               </div>
             ))}
