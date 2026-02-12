@@ -25,4 +25,34 @@ export const tutorService = {
       return { data: null, error: "something went wrong" };
     }
   },
+  getTutorDetails: async function (tutorId: string) {
+    try {
+      if (!tutorId) {
+        return { data: null, error: "Tutor ID is required" };
+      }
+
+      const url = new URL(`${BACKEND_URL}/tutor-profiles/${tutorId}`);
+
+      const res = await fetch(url.toString());
+
+      if (!res.ok) {
+        if (res.status === 404) {
+          return { data: null, error: "Tutor not found" };
+        }
+        return {
+          data: null,
+          error: `Failed to fetch tutor details: ${res.status}`,
+        };
+      }
+
+      const data = await res.json();
+      return { data: data, error: null };
+    } catch (error) {
+      console.error("Error fetching tutor details:", error);
+      return {
+        data: null,
+        error: "Something went wrong. Please try again later.",
+      };
+    }
+  },
 };
