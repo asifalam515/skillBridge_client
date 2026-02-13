@@ -22,7 +22,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { authClient } from "@/lib/auth";
-import { loginUser } from "@/services/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AlertCircle,
@@ -44,7 +43,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import Swal from "sweetalert2";
+import { toast } from "sonner";
 import * as z from "zod";
 
 // Form validation schema
@@ -75,24 +74,21 @@ const LoginForm = () => {
     },
   });
 
-  const handleCredentialsLogin = async (data: LoginFormValues) => {
+  const handleCredentialsLogin = async (value: LoginFormValues) => {
     setIsSubmitting(true);
-    setError(null);
 
+    // Simulate API call
+    const toastId = toast.loading("login User");
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      const res = await loginUser(data);
-      Swal.fire({
-        title: "Logged In success",
-        icon: "success",
-      });
-      const result = await res.json();
-      console.log(result);
-      return result;
-      router.push("/");
+      const { data, error } = await authClient.signIn.email(value);
+      if (error) {
+        toast.error(error.message, { id: toastId });
+        return;
+      }
+      toast.success("User Login Successfully ", { id: toastId });
+      console.log("Logged in user  data:", data);
     } catch (error) {
-      setError("Invalid email or password. Please try again.");
-      console.error("Login error:", error);
+      toast.error("Something Went Wrong", { id: toastId });
     } finally {
       setIsSubmitting(false);
     }
