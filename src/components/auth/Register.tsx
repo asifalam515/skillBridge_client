@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { authClient } from "@/lib/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowRight,
@@ -50,12 +51,11 @@ const registerSchema = z
     email: z.string().email("Please enter a valid email address"),
     password: z
       .string()
-      .min(8, "Password must be at least 8 characters")
-      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-      .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-      .regex(/[0-9]/, "Password must contain at least one number"),
+      .min(6, "Password must be at least 6 characters")
+
+      .regex(/[a-z]/, "Password must contain at least one lowercase letter"),
     confirmPassword: z.string(),
-    role: z.enum(["student", "tutor"]),
+    role: z.enum(["STUDENT", "TUTOR"]),
     agreeToTerms: z.boolean().refine((val) => val === true, {
       message: "You must agree to the terms and conditions",
     }),
@@ -73,7 +73,7 @@ const RegisterForm = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Initialize form
+  // Initialize form with react hook form
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -81,17 +81,17 @@ const RegisterForm = () => {
       email: "",
       password: "",
       confirmPassword: "",
-      role: "student",
+      role: "STUDENT",
       agreeToTerms: false,
     },
   });
 
-  const onSubmit = async (data: RegisterFormValues) => {
+  const onSubmit = async (value: RegisterFormValues) => {
     setIsSubmitting(true);
 
     // Simulate API call
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const { data, error } = await authClient.signUp.email(value);
       console.log("Registration data:", data);
 
       // Redirect based on role
@@ -113,7 +113,7 @@ const RegisterForm = () => {
       return { score: 0, color: "bg-gray-200", text: "Enter a password" };
 
     let score = 0;
-    if (password.length >= 8) score++;
+    if (password.length >= 6) score++;
     if (/[A-Z]/.test(password)) score++;
     if (/[a-z]/.test(password)) score++;
     if (/[0-9]/.test(password)) score++;
@@ -258,7 +258,7 @@ const RegisterForm = () => {
                       defaultValue="student"
                       className="w-full"
                       onValueChange={(value) =>
-                        form.setValue("role", value as "student" | "tutor")
+                        form.setValue("role", value as "STUDENT" | "TUTOR")
                       }
                     >
                       <TabsList className="grid grid-cols-2">
