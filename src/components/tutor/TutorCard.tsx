@@ -8,10 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import {
   Bookmark,
   BookmarkCheck,
-  Calendar,
   CheckCircle,
   Clock,
-  Globe,
   GraduationCap,
   MapPin,
   MessageSquare,
@@ -263,7 +261,7 @@ const SingleTutorCard = ({
           </div>
         )}
 
-        {/* Languages */}
+        {/* Languages
         {languages.length > 0 && variant === "detailed" && (
           <div className="mb-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
@@ -278,7 +276,7 @@ const SingleTutorCard = ({
               ))}
             </div>
           </div>
-        )}
+        )} */}
 
         {/* Availability */}
         {availability.length > 0 && (

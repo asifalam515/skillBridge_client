@@ -1,6 +1,15 @@
 import TutorDetailsPage from "@/components/tutor/TutorDetails";
 import { tutorService } from "@/services/tutor.service";
-
+// [{id:asfsf},{id:sfsf},{id:erew}]
+export async function generateStaticParams() {
+  const { data } = await tutorService.getTutors();
+  const arrayOfIds = data?.tutors
+    .map((tutor: any) => ({
+      id: tutor.id,
+    }))
+    .splice(0, 3);
+  return arrayOfIds;
+}
 const TutorDetails = async ({
   params,
 }: {

@@ -99,7 +99,6 @@ const TutorDetailsPage = ({
   if (isLoading) {
     return <TutorDetailsSkeleton />;
   }
-
   return (
     <div className="bg-background min-h-screen">
       {/* Cover Image - Using user image as cover */}
@@ -364,6 +363,17 @@ const TutorDetailsPage = ({
                   <CardContent>
                     <div className="space-y-6">
                       {/* You'll need to add subjects to your data structure */}
+                      <div className="flex gap-2 flex-wrap">
+                        {tutor?.categories?.map((cat) => (
+                          <span
+                            key={cat.categoryId}
+                            className="px-3 py-1 text-sm bg-primary/10 text-primary rounded-full"
+                          >
+                            {cat?.category.name}
+                          </span>
+                        ))}
+                      </div>
+
                       <div className="text-center py-8 text-muted-foreground">
                         No subjects added yet.
                       </div>

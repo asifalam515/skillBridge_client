@@ -11,6 +11,16 @@ export interface TutorDetails {
   totalSessions: number;
   experience: number;
   hourlyRate: number;
+  categories: [
+    {
+      tutorId: string;
+      categoryId: string;
+      category: {
+        id: string;
+        name: string;
+      };
+    },
+  ];
   subjects: {
     id: string;
     name: string;

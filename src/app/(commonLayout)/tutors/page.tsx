@@ -6,6 +6,7 @@ const Tutors = async () => {
     isFeatured: false,
     search: "",
   });
+
   return (
     <div>
       <TutorsList tutors={data.tutors}></TutorsList>
