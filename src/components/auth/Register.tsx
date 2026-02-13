@@ -42,6 +42,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import * as z from "zod";
 
 // Form validation schema
@@ -90,18 +91,25 @@ const RegisterForm = () => {
     setIsSubmitting(true);
 
     // Simulate API call
+    const toastId = toast.loading("Creating User");
     try {
       const { data, error } = await authClient.signUp.email(value);
+      if (error) {
+        toast.error(error.message, { id: toastId });
+        return;
+      }
+      toast.success("User Created Successfully ", { id: toastId });
       console.log("Registration data:", data);
 
       // Redirect based on role
       //   if (data.role === "student") {
       //     router.push("/dashboard");
       //   } else {
+      // will redirect to complete become tutor route
       //     router.push("/tutor/setup");
       //   }
     } catch (error) {
-      console.error("Registration error:", error);
+      toast.error("Something Went Wrong", { id: toastId });
     } finally {
       setIsSubmitting(false);
     }
