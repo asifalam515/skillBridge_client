@@ -64,3 +64,4 @@ export interface TutorDetailsPageProps {
   onReportClick?: (tutorId: string) => void;
   onReviewClick?: (tutorId: string) => void;
 }
+export type UserRole = "STUDENT" | "ADMIN" | "TUTOR";
