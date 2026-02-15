@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Roles } from "@/constants/roles";
 import { authClient } from "@/lib/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -102,12 +103,12 @@ const RegisterForm = () => {
       console.log("Registration data:", data);
 
       // Redirect based on role
-      //   if (data.role === "student") {
-      //     router.push("/dashboard");
-      //   } else {
-      // will redirect to complete become tutor route
-      //     router.push("/tutor/setup");
-      //   }
+      if (data.user?.role === Roles.student) {
+        router.push("/");
+      } else {
+        // will redirect to complete become tutor route
+        router.push("/become-tutor");
+      }
     } catch (error) {
       toast.error("Something Went Wrong", { id: toastId });
     } finally {
@@ -270,11 +271,11 @@ const RegisterForm = () => {
                       }
                     >
                       <TabsList className="grid grid-cols-2">
-                        <TabsTrigger value="student" className="gap-2">
+                        <TabsTrigger value={Roles.student} className="gap-2">
                           <GraduationCap className="h-4 w-4" />
                           Student
                         </TabsTrigger>
-                        <TabsTrigger value="tutor" className="gap-2">
+                        <TabsTrigger value={Roles.tutor} className="gap-2">
                           <User className="h-4 w-4" />
                           Tutor
                         </TabsTrigger>
@@ -544,10 +545,10 @@ const RegisterForm = () => {
                 <h4 className="font-semibold flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
                   Benefits for{" "}
-                  {form.watch("role") === "student" ? "Students" : "Tutors"}:
+                  {form.watch("role") === "STUDENT" ? "Students" : "Tutors"}:
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {(form.watch("role") === "student"
+                  {(form.watch("role") === "STUDENT"
                     ? features.student
                     : features.tutor
                   ).map((feature, index) => (
