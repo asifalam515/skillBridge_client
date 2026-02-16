@@ -245,7 +245,7 @@ const BecomeTutorForm = ({
 
   const totalSteps = steps.length;
   const progress = (currentStep / totalSteps) * 100;
-
+  console.log("Form values:", getValues());
   const handleNext = async () => {
     let isValid = false;
     switch (currentStep) {
@@ -256,7 +256,7 @@ const BecomeTutorForm = ({
         isValid = await trigger("subjects");
         break;
       case 3:
-        isValid = await trigger(["pricePerHr", "availability"]);
+        isValid = await trigger(["pricePerHr", "availability"])np;
         break;
       default:
         break;
@@ -272,7 +272,6 @@ const BecomeTutorForm = ({
 
   const onSubmit = async (value: CompleteFormValues) => {
     const toastId = toast.loading("Submitting your application...");
-    console.log("form value is ", value);
     setIsSubmitting(true);
     try {
       // Simulate API call
@@ -293,9 +292,9 @@ const BecomeTutorForm = ({
       toast.success("Application submitted successfully!", { id: toastId });
       setIsSubmitted(true);
       // Redirect to tutor dashboard after success
-      //   setTimeout(() => {
-      //     router.push("/tutor/dashboard");
-      //   }, 2000);
+        setTimeout(() => {
+          router.push("/tutor/dashboard");
+        }, 2000);
     } catch (error) {
       console.error("Submission error:", error);
     } finally {
