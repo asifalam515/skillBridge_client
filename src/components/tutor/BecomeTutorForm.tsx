@@ -256,7 +256,7 @@ const BecomeTutorForm = ({
         isValid = await trigger("subjects");
         break;
       case 3:
-        isValid = await trigger(["pricePerHr", "availability"])np;
+        isValid = await trigger(["pricePerHr", "availability"]);
         break;
       default:
         break;
@@ -292,10 +292,11 @@ const BecomeTutorForm = ({
       toast.success("Application submitted successfully!", { id: toastId });
       setIsSubmitted(true);
       // Redirect to tutor dashboard after success
-        setTimeout(() => {
-          router.push("/tutor/dashboard");
-        }, 2000);
+      // setTimeout(() => {
+      //   router.push("/tutor/dashboard");
+      // }, 2000);
     } catch (error) {
+      console.log("Error ");
       console.error("Submission error:", error);
     } finally {
       setIsSubmitting(false);
