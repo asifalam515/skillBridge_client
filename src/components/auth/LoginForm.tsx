@@ -105,8 +105,7 @@ const LoginForm = () => {
     });
     console.log("data is ", data);
   };
-  const session = authClient.useSession();
-  console.log(session);
+
   const handleForgotPassword = () => {
     router.push("/forgot-password");
   };

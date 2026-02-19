@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
+import { authClient } from "@/lib/auth";
 import {
   BarChart3,
   BookOpen,
@@ -40,7 +41,7 @@ interface UserData {
   notifications?: number;
 }
 
-const Navbar = () => {
+const Navbar = ({ userInfo: any }) => {
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -48,15 +49,17 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
 
   // // Mock user data - replace with actual authentication logic
+  const session = authClient.useSession();
+  const userData = session.data?.user;
   useEffect(() => {
     // Simulate user authentication
     const mockUser: UserData = {
       id: "1",
-      name: "John Doe",
-      email: "john@example.com",
+      name: userData?.name,
+      email: userData?.email,
       role: "student",
-      avatar: "/avatars/john.jpg",
-      notifications: 3,
+      avatar: userData?.image,
+      // notifications: 3,
     };
     setUser(mockUser);
   }, []);
@@ -246,12 +249,7 @@ const Navbar = () => {
                     >
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={user.avatar} alt={user.name} />
-                        <AvatarFallback>
-                          {user.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </AvatarFallback>
+                        <AvatarFallback>{user?.name}</AvatarFallback>
                       </Avatar>
                       {user.notifications && user.notifications > 0 && (
                         <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs text-white">
