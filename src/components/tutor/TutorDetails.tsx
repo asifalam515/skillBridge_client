@@ -99,7 +99,6 @@ const TutorDetailsPage = ({
   if (isLoading) {
     return <TutorDetailsSkeleton />;
   }
-  console.log(tutor);
   return (
     <div className="bg-background min-h-screen">
       {/* Cover Image - Using user image as cover */}

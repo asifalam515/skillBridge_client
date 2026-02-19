@@ -10,7 +10,7 @@ export interface TutorDetails {
   totalStudents: number;
   totalSessions: number;
   experience: number;
-  hourlyRate: number;
+  pricePerHr: number;
   categories: [
     {
       tutorId: string;
