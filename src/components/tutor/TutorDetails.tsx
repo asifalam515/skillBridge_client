@@ -99,6 +99,7 @@ const TutorDetailsPage = ({
   if (isLoading) {
     return <TutorDetailsSkeleton />;
   }
+  console.log(tutor);
   return (
     <div className="bg-background min-h-screen">
       {/* Cover Image - Using user image as cover */}
@@ -546,8 +547,20 @@ const TutorDetailsPage = ({
                 {/* Subject Selection */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Select Subject</label>
+
                   <select className="w-full h-10 px-3 rounded-md border bg-background">
-                    <option value="">No subjects available</option>
+                    {tutor.categories.length > 0 ? (
+                      tutor.categories.map((subject) => (
+                        <option
+                          key={subject.categoryId}
+                          value={subject.categoryId}
+                        >
+                          {subject.category.name}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="">No subjects available</option>
+                    )}
                   </select>
                 </div>
 

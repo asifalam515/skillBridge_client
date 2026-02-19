@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
+import { Roles } from "@/constants/roles";
 import { authClient } from "@/lib/auth";
 import {
   BarChart3,
@@ -36,58 +37,43 @@ interface UserData {
   id: string;
   name: string;
   email: string;
-  role: "student" | "tutor" | "admin";
+  role: "ADMIN" | "STUDENT" | "TUTOR";
   avatar?: string;
-  notifications?: number;
 }
 
-const Navbar = ({ userInfo: any }) => {
+const Navbar = () => {
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [user, setUser] = useState<UserData | null>(null);
   const [scrolled, setScrolled] = useState(false);
 
-  // // Mock user data - replace with actual authentication logic
-  const session = authClient.useSession();
-  const userData = session.data?.user;
-  useEffect(() => {
-    // Simulate user authentication
-    const mockUser: UserData = {
-      id: "1",
-      name: userData?.name,
-      email: userData?.email,
-      role: "student",
-      avatar: userData?.image,
-      // notifications: 3,
-    };
-    setUser(mockUser);
-  }, []);
+  // ✅ Auth session
+  const { data: session, isPending } = authClient.useSession();
+  const userData = session?.user;
 
-  // Handle scroll effect
+  const user: UserData | null = userData
+    ? {
+        id: userData.id,
+        name: userData.name,
+        email: userData.email,
+        role: userData.role,
+        avatar: userData.image,
+      }
+    : null;
+
+  // Scroll blur effect
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
-    };
+    const handleScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleLogout = () => {
-    // Implement logout logic here
-    setUser(null);
+  // ✅ Logout
+  const handleLogout = async () => {
+    await authClient.signOut();
     router.push("/");
   };
 
-  const handleLogin = () => {
-    router.push("/login");
-  };
-
-  const handleRegister = () => {
-    router.push("/register");
-  };
-
-  // Public navigation items
   const publicNavItems = [
     { href: "/", label: "Home", icon: <Home className="h-4 w-4" /> },
     {
@@ -97,7 +83,6 @@ const Navbar = ({ userInfo: any }) => {
     },
   ];
 
-  // Student navigation items
   const studentNavItems = [
     {
       href: "/dashboard",
@@ -111,7 +96,6 @@ const Navbar = ({ userInfo: any }) => {
     },
   ];
 
-  // Tutor navigation items
   const tutorNavItems = [
     {
       href: "/tutor/dashboard",
@@ -130,7 +114,6 @@ const Navbar = ({ userInfo: any }) => {
     },
   ];
 
-  // Admin navigation items
   const adminNavItems = [
     {
       href: "/admin",
@@ -154,15 +137,14 @@ const Navbar = ({ userInfo: any }) => {
     },
   ];
 
-  // Get role-specific navigation items
   const getRoleNavItems = () => {
     if (!user) return [];
     switch (user.role) {
-      case "student":
+      case Roles.student:
         return studentNavItems;
-      case "tutor":
+      case Roles.tutor:
         return tutorNavItems;
-      case "admin":
+      case Roles.admin:
         return adminNavItems;
       default:
         return [];
@@ -171,331 +153,130 @@ const Navbar = ({ userInfo: any }) => {
 
   const roleNavItems = getRoleNavItems();
 
-  // Check if a link is active
-  const isActive = (href: string) => {
-    if (href === "/") {
-      return pathname === href;
-    }
-    return pathname.startsWith(href);
+  const isActive = (href: string) =>
+    href === "/" ? pathname === href : pathname.startsWith(href);
+
+  const getProfileRoute = () => {
+    if (!user) return "/";
+    if (user.role === Roles.student) return "/dashboard/profile";
+    if (user.role === Roles.tutor) return "/tutor/profile";
+    return "/admin";
   };
 
   return (
-    <>
-      <nav
-        className={`sticky top-0 z-50 w-full border-b bg-background transition-all duration-200 ${
-          scrolled
-            ? "backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-sm"
-            : ""
-        }`}
-      >
-        <div className="container mx-auto px-4">
-          <div className="flex h-16 items-center justify-between">
-            {/* Logo */}
-            <div className="flex items-center">
-              <Link href="/" className="flex items-center space-x-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-foreground">
-                  <BookOpen className="h-5 w-5 " />
-                </div>
-                <span className="text-xl font-bold text-foreground">
-                  SkillBridge
-                </span>
+    <nav
+      className={`sticky top-0 z-50 w-full border-b bg-background transition-all duration-200 ${
+        scrolled
+          ? "backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-sm"
+          : ""
+      }`}
+    >
+      <div className="container mx-auto px-4">
+        <div className="flex h-16 items-center justify-between">
+          {/* Logo */}
+          <Link href="/" className="flex items-center space-x-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+              <BookOpen className="h-5 w-5" />
+            </div>
+            <span className="text-xl font-bold">SkillBridge</span>
+          </Link>
+
+          {/* Desktop */}
+          <div className="hidden md:flex items-center space-x-1">
+            {publicNavItems.map((item) => (
+              <Link key={item.href} href={item.href}>
+                <Button
+                  variant={isActive(item.href) ? "default" : "ghost"}
+                  className="flex items-center gap-2"
+                >
+                  {item.icon}
+                  {item.label}
+                </Button>
               </Link>
+            ))}
 
-              {/* Role Badge for logged-in users */}
-              {user && (
-                <Badge variant="outline" className="ml-3 hidden md:flex">
-                  {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                </Badge>
-              )}
-            </div>
+            {roleNavItems.map((item) => (
+              <Link key={item.href} href={item.href}>
+                <Button
+                  variant={isActive(item.href) ? "default" : "ghost"}
+                  className="flex items-center gap-2"
+                >
+                  {item.icon}
+                  {item.label}
+                </Button>
+              </Link>
+            ))}
 
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-1">
-              {/* Public Navigation */}
-              {publicNavItems.map((item) => (
-                <Link key={item.href} href={item.href}>
-                  <Button
-                    variant={isActive(item.href) ? "default" : "ghost"}
-                    className="flex items-center gap-2"
-                  >
-                    {item.icon}
-                    {item.label}
-                  </Button>
-                </Link>
-              ))}
+            <Separator orientation="vertical" className="mx-2 h-6" />
 
-              {/* Role-specific Navigation */}
-              {roleNavItems.map((item) => (
-                <Link key={item.href} href={item.href}>
-                  <Button
-                    variant={isActive(item.href) ? "default" : "ghost"}
-                    className="flex items-center gap-2"
-                  >
-                    {item.icon}
-                    {item.label}
-                  </Button>
-                </Link>
-              ))}
-
-              <Separator orientation="vertical" className="mx-2 h-6" />
-
-              {/* Authentication Section */}
-              {user ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="relative h-8 w-8 rounded-full"
-                    >
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.avatar} alt={user.name} />
-                        <AvatarFallback>{user?.name}</AvatarFallback>
-                      </Avatar>
-                      {user.notifications && user.notifications > 0 && (
-                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs text-white">
-                          {user.notifications}
-                        </span>
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="end">
-                    <DropdownMenuLabel>
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">
-                          {user.name}
-                        </p>
-                        <p className="text-xs leading-none text-muted-foreground">
-                          {user.email}
-                        </p>
-                        <Badge variant="secondary" className="mt-1 w-fit">
-                          {user.role}
-                        </Badge>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-
-                    {/* Profile Link */}
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={
-                          user.role === "student"
-                            ? "/dashboard/profile"
-                            : user.role === "tutor"
-                              ? "/tutor/profile"
-                              : "/admin"
-                        }
-                        className="cursor-pointer"
-                      >
-                        <User className="mr-2 h-4 w-4" />
-                        Profile
-                      </Link>
-                    </DropdownMenuItem>
-
-                    {/* Role-specific Links */}
-                    {user.role === "tutor" && (
-                      <>
-                        <DropdownMenuItem asChild>
-                          <Link
-                            href="/tutor/dashboard"
-                            className="cursor-pointer"
-                          >
-                            <BarChart3 className="mr-2 h-4 w-4" />
-                            Tutor Dashboard
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link
-                            href="/tutor/availability"
-                            className="cursor-pointer"
-                          >
-                            <Clock className="mr-2 h-4 w-4" />
-                            Availability
-                          </Link>
-                        </DropdownMenuItem>
-                      </>
-                    )}
-
-                    {user.role === "student" && (
-                      <DropdownMenuItem asChild>
-                        <Link
-                          href="/dashboard/bookings"
-                          className="cursor-pointer"
-                        >
-                          <Calendar className="mr-2 h-4 w-4" />
-                          My Bookings
-                        </Link>
-                      </DropdownMenuItem>
-                    )}
-
-                    {user.role === "admin" && (
-                      <DropdownMenuItem asChild>
-                        <Link href="/admin" className="cursor-pointer">
-                          <Shield className="mr-2 h-4 w-4" />
-                          Admin Dashboard
-                        </Link>
-                      </DropdownMenuItem>
-                    )}
-
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={handleLogout}
-                      className="cursor-pointer text-destructive"
-                    >
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Logout
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <div className="flex items-center space-x-2">
-                  <Button variant="ghost" onClick={handleLogin}>
-                    Login
-                  </Button>
-                  <Button onClick={handleRegister}>Get Started</Button>
-                </div>
-              )}
-              <Separator orientation="vertical" className="mx-2 h-6" />
-              <ModeToggle></ModeToggle>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? (
-                <X className="h-5 w-5" />
-              ) : (
-                <Menu className="h-5 w-5" />
-              )}
-            </Button>
-          </div>
-        </div>
-
-        {/* Mobile Navigation Menu */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden border-t">
-            <div className="container mx-auto px-4 py-4">
-              {/* Public Navigation */}
-              <div className="space-y-1">
-                {publicNavItems.map((item) => (
-                  <Link key={item.href} href={item.href}>
-                    <Button
-                      variant={isActive(item.href) ? "default" : "ghost"}
-                      className="w-full justify-start"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      {item.icon}
-                      {item.label}
-                    </Button>
-                  </Link>
-                ))}
-              </div>
-
-              {/* Role-specific Navigation */}
-              {user && (
-                <>
-                  <Separator className="my-3" />
-                  <div className="space-y-1">
-                    {roleNavItems.map((item) => (
-                      <Link key={item.href} href={item.href}>
-                        <Button
-                          variant={isActive(item.href) ? "default" : "ghost"}
-                          className="w-full justify-start"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          {item.icon}
-                          {item.label}
-                        </Button>
-                      </Link>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {/* Authentication Section */}
-              <Separator className="my-3" />
-              {user ? (
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3">
+            {/* Auth */}
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 rounded-full">
                     <Avatar>
-                      <AvatarImage src={user.avatar} alt={user.name} />
-                      <AvatarFallback>
-                        {user.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
+                      <AvatarImage src={user.avatar} />
+                      <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <div>
-                      <p className="text-sm font-medium">{user.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {user.email}
-                      </p>
-                      <Badge variant="secondary" className="mt-1">
-                        {user.role}
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        router.push(
-                          user.role === "student"
-                            ? "/dashboard/profile"
-                            : user.role === "tutor"
-                              ? "/tutor/profile"
-                              : "/admin",
-                        );
-                        setIsMobileMenuOpen(false);
-                      }}
-                    >
+                  </Button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <p className="text-sm font-medium">{user.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {user.email}
+                    </p>
+                    <Badge className="mt-1">{user.role}</Badge>
+                  </DropdownMenuLabel>
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem asChild>
+                    <Link href={getProfileRoute()}>
                       <User className="mr-2 h-4 w-4" />
                       Profile
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={() => {
-                        handleLogout();
-                        setIsMobileMenuOpen(false);
-                      }}
-                    >
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Logout
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <Button
-                    className="w-full"
-                    onClick={() => {
-                      handleLogin();
-                      setIsMobileMenuOpen(false);
-                    }}
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="text-destructive"
                   >
-                    Login
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => {
-                      handleRegister();
-                      setIsMobileMenuOpen(false);
-                    }}
-                  >
-                    Register
-                  </Button>
-                </div>
-              )}
-            </div>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Button variant="ghost" onClick={() => router.push("/login")}>
+                  Login
+                </Button>
+                <Button onClick={() => router.push("/register")}>
+                  Get Started
+                </Button>
+              </>
+            )}
+
+            <Separator orientation="vertical" className="mx-2 h-6" />
+            <ModeToggle />
           </div>
-        )}
-      </nav>
-    </>
+
+          {/* Mobile toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setIsMobileMenuOpen((p) => !p)}
+          >
+            {isMobileMenuOpen ? <X /> : <Menu />}
+          </Button>
+        </div>
+      </div>
+    </nav>
   );
 };
 
