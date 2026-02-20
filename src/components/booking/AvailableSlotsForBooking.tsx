@@ -1,10 +1,11 @@
 "use client";
 
 import { format } from "date-fns";
-import { Calendar, Clock, Loader2 } from "lucide-react";
+import { Calendar, Clock, Loader2, XCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -41,7 +42,7 @@ const AvailableSlotsForBooking = ({
 
   const { data: session } = authClient.useSession();
 
-  const fetchAvailableSlots = async () => {
+  const fetchSlots = async () => {
     setLoading(true);
     try {
       const response = await fetch(
@@ -58,7 +59,14 @@ const AvailableSlotsForBooking = ({
       }
 
       const data = await response.json();
-      setSlots(data);
+
+      // Filter out past slots (end time already passed)
+      const now = new Date();
+      const futureSlots = data.filter(
+        (slot: AvailabilitySlot) => new Date(slot.endTime) > now,
+      );
+
+      setSlots(futureSlots);
     } catch (error) {
       console.error("Fetch slots error:", error);
       toast.error("Could not load available slots");
@@ -69,7 +77,7 @@ const AvailableSlotsForBooking = ({
 
   useEffect(() => {
     if (tutorId) {
-      fetchAvailableSlots();
+      fetchSlots();
     }
   }, [tutorId]);
 
@@ -79,12 +87,20 @@ const AvailableSlotsForBooking = ({
       return;
     }
 
+    const slot = slots.find((s) => s.id === slotId);
+    if (!slot) return;
+
+    // Double-check slot is not already booked (UI might be stale)
+    if (slot.isBooked) {
+      toast.error("This slot is already booked");
+      return;
+    }
+
     // Prevent double-click
     if (bookingInProgress === slotId) return;
 
     setBookingInProgress(slotId);
 
-    // Create abort controller for this request
     abortControllerRef.current = new AbortController();
     const { signal } = abortControllerRef.current;
 
@@ -103,11 +119,9 @@ const AvailableSlotsForBooking = ({
         },
       );
 
-      // If request was aborted, don't process
       if (signal.aborted) return;
 
       if (!response.ok) {
-        // Try to get error message from server
         let errorMsg = "Booking failed";
         try {
           const errorData = await response.json();
@@ -118,12 +132,15 @@ const AvailableSlotsForBooking = ({
         throw new Error(errorMsg);
       }
 
-      // Success
+      // Success – mark slot as booked in UI
+      setSlots((prev) =>
+        prev.map((s) => (s.id === slotId ? { ...s, isBooked: true } : s)),
+      );
+
       toast.success("Booking confirmed! 🎉");
-      setSlots((prev) => prev.filter((slot) => slot.id !== slotId));
       onBookingSuccess?.();
     } catch (error: any) {
-      if (error.name === "AbortError") return; // ignore abort
+      if (error.name === "AbortError") return;
       console.error("Booking error:", error);
       toast.error(error.message || "Could not book slot");
     } finally {
@@ -146,9 +163,11 @@ const AvailableSlotsForBooking = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Calendar className="h-5 w-5 text-primary" />
-          Available Sessions
+          Sessions with this Tutor
         </CardTitle>
-        <CardDescription>Select a time that works for you.</CardDescription>
+        <CardDescription>
+          Available slots are highlighted; booked slots are marked.
+        </CardDescription>
       </CardHeader>
 
       <CardContent>
@@ -160,42 +179,68 @@ const AvailableSlotsForBooking = ({
         ) : slots.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <Clock className="h-14 w-14 mx-auto mb-4 opacity-20" />
-            <p className="text-lg font-medium">No available slots</p>
+            <p className="text-lg font-medium">No upcoming sessions</p>
             <p className="text-sm">
               This tutor hasn't set any availability yet.
             </p>
           </div>
         ) : (
           <div className="grid gap-3">
-            {slots.map((slot) => (
-              <div
-                key={slot.id}
-                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl border hover:shadow-sm transition"
-              >
-                <div className="space-y-1">
-                  <p className="font-medium text-sm md:text-base">
-                    {formatSlotTime(slot.startTime, slot.endTime)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    60 minutes • Online
-                  </p>
-                </div>
+            {slots.map((slot) => {
+              const isPast = new Date(slot.endTime) <= new Date();
+              const isBooked = slot.isBooked || isPast; // treat past as booked
+              const isAvailable = !isBooked;
 
-                <Button
-                  size="sm"
-                  onClick={() => handleBookSlot(slot.id)}
-                  disabled={bookingInProgress === slot.id}
-                  className="gap-2"
+              return (
+                <div
+                  key={slot.id}
+                  className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl border transition ${
+                    isAvailable
+                      ? "hover:shadow-md border-green-200 dark:border-green-800"
+                      : "border-muted bg-muted/20"
+                  }`}
                 >
-                  {bookingInProgress === slot.id ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Calendar className="h-4 w-4" />
-                  )}
-                  {bookingInProgress === slot.id ? "Booking..." : "Book"}
-                </Button>
-              </div>
-            ))}
+                  <div className="space-y-1">
+                    <p className="font-medium text-sm md:text-base">
+                      {formatSlotTime(slot.startTime, slot.endTime)}
+                    </p>
+                    <p className="text-xs text-muted-foreground flex items-center gap-2">
+                      <span>60 minutes • Online</span>
+                      {isBooked && (
+                        <Badge variant="secondary" className="text-xs">
+                          {isPast ? "Passed" : "Booked"}
+                        </Badge>
+                      )}
+                    </p>
+                  </div>
+
+                  <Button
+                    size="sm"
+                    onClick={() => handleBookSlot(slot.id)}
+                    disabled={isBooked || bookingInProgress === slot.id}
+                    variant={isAvailable ? "default" : "outline"}
+                    className={`gap-2 ${
+                      isBooked ? "cursor-not-allowed opacity-60" : ""
+                    }`}
+                  >
+                    {bookingInProgress === slot.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : isBooked ? (
+                      <XCircle className="h-4 w-4" />
+                    ) : (
+                      <Calendar className="h-4 w-4" />
+                    )}
+                    {bookingInProgress === slot.id
+                      ? "Booking..."
+                      : isBooked
+                        ? isPast
+                          ? "Passed"
+                          : "Booked"
+                        : "Book"}
+                  </Button>
+                </div>
+              );
+            })}
           </div>
         )}
       </CardContent>
