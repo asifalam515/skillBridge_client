@@ -31,6 +31,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { ModeToggle } from "./ModeToggle";
 
 interface UserData {
@@ -68,9 +69,9 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // ✅ Logout
   const handleLogout = async () => {
     await authClient.signOut();
+    toast.success("Logged out successfully");
     router.push("/");
   };
 
@@ -103,7 +104,7 @@ const Navbar = () => {
       icon: <BarChart3 className="h-4 w-4" />,
     },
     {
-      href: "/tutor/availability",
+      href: "/availability-slot",
       label: "Availability",
       icon: <Clock className="h-4 w-4" />,
     },

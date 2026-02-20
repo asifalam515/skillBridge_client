@@ -5,6 +5,7 @@ import { format, isBefore } from "date-fns";
 import { CalendarIcon, Clock, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -37,14 +38,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
 
 // Schema for a new availability slot
 const availabilitySlotSchema = z
   .object({
-    date: z.date({
-      required_error: "Please select a date",
-    }),
+    date: z.date({ required_error: "Please select a date" }),
     startHour: z.string().min(1, "Start hour required"),
     startMinute: z.string().min(1, "Start minute required"),
     endHour: z.string().min(1, "End hour required"),
@@ -63,35 +61,31 @@ const availabilitySlotSchema = z
       end.setHours(parseInt(data.endHour), parseInt(data.endMinute), 0, 0);
       return isBefore(start, end);
     },
-    {
-      message: "End time must be after start time",
-      path: ["endHour"],
-    },
+    { message: "End time must be after start time", path: ["endHour"] },
   );
 
 type AvailabilitySlotForm = z.infer<typeof availabilitySlotSchema>;
 
 interface AvailabilitySlot {
   id: string;
-  startTime: string; // ISO string from backend
+  startTime: string; // ISO string
   endTime: string;
   isBooked: boolean;
 }
 
-interface AvailabilityManagerProps {
-  tutorId: string; // or we can get from session
+interface CreateAvailabilitySlotProps {
+  tutorId: string;
 }
 
-const AvailabilityManager = ({ tutorId }: AvailabilityManagerProps) => {
+const CreateAvailabilitySlot = ({ tutorId }: CreateAvailabilitySlotProps) => {
   const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Generate hour and minute options
   const hours = Array.from({ length: 24 }, (_, i) =>
     i.toString().padStart(2, "0"),
   );
-  const minutes = ["00", "15", "30", "45"]; // 15-minute increments
+  const minutes = ["00", "15", "30", "45"];
 
   const form = useForm<AvailabilitySlotForm>({
     resolver: zodResolver(availabilitySlotSchema),
@@ -104,40 +98,32 @@ const AvailabilityManager = ({ tutorId }: AvailabilityManagerProps) => {
     },
   });
 
-  // Fetch existing slots
-  useEffect(() => {
-    fetchSlots();
-  }, [tutorId]);
-
   const fetchSlots = async () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/availability-slots`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        },
+        `${process.env.NEXT_PUBLIC_BASE_URL}/availability-slots?tutorId=${tutorId}`,
+        { credentials: "include" },
       );
       if (!response.ok) throw new Error("Failed to fetch slots");
       const data = await response.json();
       setSlots(data);
     } catch (error) {
-      toast.error("An Error Occurred", {
-        description: "Failed to fetch slot",
+      toast.error("Error", {
+        description: "Could not load availability slots",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchSlots();
+  }, [tutorId]);
+
   const onSubmit = async (data: AvailabilitySlotForm) => {
     setIsSubmitting(true);
     try {
-      // Construct ISO strings
       const startDateTime = new Date(data.date);
       startDateTime.setHours(
         parseInt(data.startHour),
@@ -172,9 +158,7 @@ const AvailabilityManager = ({ tutorId }: AvailabilityManagerProps) => {
 
       if (!response.ok) throw new Error("Failed to create slot");
 
-      toast.success("Slot has been created");
-
-      // Reset form to next hour (optional)
+      toast.success("Slot created successfully");
       form.reset({
         date: data.date,
         startHour: data.endHour,
@@ -182,13 +166,9 @@ const AvailabilityManager = ({ tutorId }: AvailabilityManagerProps) => {
         endHour: (parseInt(data.endHour) + 1).toString().padStart(2, "0"),
         endMinute: "00",
       });
-
-      // Refresh list
       fetchSlots();
     } catch (error) {
-      toast.error("An Error Occurred", {
-        description: "Could not create slot",
-      });
+      toast.error("Error", { description: "Could not create slot" });
     } finally {
       setIsSubmitting(false);
     }
@@ -197,21 +177,14 @@ const AvailabilityManager = ({ tutorId }: AvailabilityManagerProps) => {
   const handleDelete = async (slotId: string) => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/availability-slots/{slotId}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        },
+        `${process.env.NEXT_PUBLIC_BASE_URL}/availability-slots/${slotId}`,
+        { method: "DELETE", credentials: "include" },
       );
       if (!response.ok) throw new Error("Failed to delete slot");
-
-      toast("Deleted");
-
+      toast.success("Slot deleted");
       fetchSlots();
     } catch (error) {
-      toast.error(`Error Happen ${error}`, {
-        description: "could not delete slot",
-      });
+      toast.error("Error", { description: "Could not delete slot" });
     }
   };
 
@@ -223,7 +196,7 @@ const AvailabilityManager = ({ tutorId }: AvailabilityManagerProps) => {
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
-      {/* Add Slot Card */}
+      {/* Add Slot Form */}
       <Card className="shadow-md border-muted/40">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
@@ -238,7 +211,6 @@ const AvailabilityManager = ({ tutorId }: AvailabilityManagerProps) => {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Date Picker */}
               <FormField
                 control={form.control}
                 name="date"
@@ -253,15 +225,12 @@ const AvailabilityManager = ({ tutorId }: AvailabilityManagerProps) => {
                             className="w-full justify-start text-left font-normal"
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
+                            {field.value
+                              ? format(field.value, "PPP")
+                              : "Pick a date"}
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
-
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
@@ -277,7 +246,6 @@ const AvailabilityManager = ({ tutorId }: AvailabilityManagerProps) => {
                 )}
               />
 
-              {/* Time Selection */}
               <div className="grid gap-6 md:grid-cols-2">
                 {/* Start Time */}
                 <div className="space-y-3">
@@ -309,7 +277,6 @@ const AvailabilityManager = ({ tutorId }: AvailabilityManagerProps) => {
                         </FormItem>
                       )}
                     />
-
                     <FormField
                       control={form.control}
                       name="startMinute"
@@ -369,7 +336,6 @@ const AvailabilityManager = ({ tutorId }: AvailabilityManagerProps) => {
                         </FormItem>
                       )}
                     />
-
                     <FormField
                       control={form.control}
                       name="endMinute"
@@ -400,11 +366,7 @@ const AvailabilityManager = ({ tutorId }: AvailabilityManagerProps) => {
                 </div>
               </div>
 
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full md:w-auto gap-2"
-              >
+              <Button type="submit" disabled={isSubmitting} className="gap-2">
                 <Plus className="h-4 w-4" />
                 {isSubmitting ? "Adding..." : "Add Slot"}
               </Button>
@@ -447,7 +409,6 @@ const AvailabilityManager = ({ tutorId }: AvailabilityManagerProps) => {
                     <p className="font-medium text-sm md:text-base">
                       {formatSlotTime(slot.startTime, slot.endTime)}
                     </p>
-
                     <div className="mt-1">
                       {slot.isBooked ? (
                         <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700">
@@ -460,7 +421,6 @@ const AvailabilityManager = ({ tutorId }: AvailabilityManagerProps) => {
                       )}
                     </div>
                   </div>
-
                   <Button
                     variant="ghost"
                     size="icon"
@@ -480,4 +440,4 @@ const AvailabilityManager = ({ tutorId }: AvailabilityManagerProps) => {
   );
 };
 
-export default AvailabilityManager;
+export default CreateAvailabilitySlot;

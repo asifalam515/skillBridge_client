@@ -36,6 +36,7 @@ import {
   Video,
 } from "lucide-react";
 import { useState } from "react";
+import AvailableSlotsForBooking from "../booking/AvailableSlotsForBooking";
 
 const TutorDetailsPage = ({
   tutor,
@@ -99,6 +100,7 @@ const TutorDetailsPage = ({
   if (isLoading) {
     return <TutorDetailsSkeleton />;
   }
+
   return (
     <div className="bg-background min-h-screen">
       {/* Cover Image - Using user image as cover */}
@@ -479,6 +481,9 @@ const TutorDetailsPage = ({
                   <CardContent>
                     <div className="space-y-6">
                       {/* You'll need to add availability to your data structure */}
+                      <AvailableSlotsForBooking
+                        tutorId={tutor.id}
+                      ></AvailableSlotsForBooking>
                       <div className="text-center py-8 text-muted-foreground">
                         No availability slots added yet.
                       </div>
@@ -524,25 +529,6 @@ const TutorDetailsPage = ({
 
                 <Separator />
 
-                {/* Session Duration */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">
-                    Session Duration
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[30, 60, 90, 120].map((minutes) => (
-                      <Button
-                        key={minutes}
-                        variant="outline"
-                        size="sm"
-                        className="justify-center"
-                      >
-                        {minutes} min
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Subject Selection */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Select Subject</label>
@@ -562,7 +548,11 @@ const TutorDetailsPage = ({
                     )}
                   </select>
                 </div>
-
+                <div>
+                  <AvailableSlotsForBooking
+                    tutorId={tutor.id}
+                  ></AvailableSlotsForBooking>
+                </div>
                 {/* Quick Stats */}
                 <div className="space-y-3 pt-4">
                   <div className="flex items-center justify-between text-sm">
@@ -583,13 +573,6 @@ const TutorDetailsPage = ({
                 </div>
               </CardContent>
               <CardFooter className="flex-col gap-3 border-t p-6">
-                <Button
-                  className="w-full h-12 text-base gap-2"
-                  onClick={handleBookNow}
-                >
-                  <Calendar className="h-5 w-5" />
-                  Book This Tutor
-                </Button>
                 <Button
                   variant="outline"
                   className="w-full gap-2"

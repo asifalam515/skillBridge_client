@@ -20,6 +20,7 @@ const TutorDetails = async ({
   const { data: tutorData, error } = await tutorService.getTutorDetails(
     id as string,
   );
+
   return (
     <div>
       <TutorDetailsPage tutor={tutorData}></TutorDetailsPage>

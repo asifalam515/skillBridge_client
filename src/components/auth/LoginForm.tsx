@@ -86,9 +86,10 @@ const LoginForm = () => {
         return;
       }
       toast.success("User Login Successfully ", { id: toastId });
-      console.log("Logged in user  data:", data);
+      router.push("/");
     } catch (error) {
       toast.error("Something Went Wrong", { id: toastId });
+      console.log(error);
     } finally {
       setIsSubmitting(false);
     }
