@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Roles } from "@/constants/roles";
+import { authClient } from "@/lib/auth";
 import { UserRole } from "@/types/tutor/types";
 import {
   Award,
@@ -53,11 +54,11 @@ export default function RoleBasedLayout({
 }: LayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
-
+  const { data: session } = authClient.useSession();
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  console.log("Session data:", session);
   useEffect(() => {
     loadUserData();
   }, []);
@@ -69,9 +70,9 @@ export default function RoleBasedLayout({
 
       const mockUser: UserData = {
         id: "1",
-        name: "John Doe",
-        email: "john@example.com",
-        role: "STUDENT",
+        name: session?.user?.name || "Unknown User",
+        email: session?.user?.email || "not email found",
+        role: session?.user?.role || "unknown",
       };
 
       setUser(mockUser);
@@ -86,7 +87,7 @@ export default function RoleBasedLayout({
   // ===================== SIDEBAR DATA =====================
   const studentSidebarItems = [
     { href: "/dashboard", label: "Overview", icon: Home },
-    { href: "/dashboard/bookings", label: "Bookings", icon: Calendar },
+    { href: "/bookings", label: "Bookings", icon: Calendar },
     { href: "/dashboard/sessions", label: "Sessions", icon: BookOpen },
     { href: "/dashboard/reviews", label: "Reviews", icon: MessageSquare },
     { href: "/dashboard/resources", label: "Resources", icon: FileText },

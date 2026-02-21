@@ -91,7 +91,7 @@ const Navbar = () => {
       icon: <BarChart3 className="h-4 w-4" />,
     },
     {
-      href: "/dashboard/bookings",
+      href: "/bookings",
       label: "My Bookings",
       icon: <Calendar className="h-4 w-4" />,
     },
@@ -99,7 +99,7 @@ const Navbar = () => {
 
   const tutorNavItems = [
     {
-      href: "/tutor/dashboard",
+      href: "/dashboard",
       label: "Dashboard",
       icon: <BarChart3 className="h-4 w-4" />,
     },
