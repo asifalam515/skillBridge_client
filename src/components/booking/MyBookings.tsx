@@ -63,7 +63,11 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/bookings?role=${userRole}&userId=${userId}`,
-        { credentials: "include" },
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        },
       );
       if (!response.ok) throw new Error("Failed to fetch bookings");
       const data = await response.json();
@@ -86,7 +90,7 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
   ) => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/bookings/${bookingId}`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/bookings/status/${bookingId}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
