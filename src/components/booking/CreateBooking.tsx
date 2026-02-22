@@ -132,7 +132,6 @@ export function CreateBooking({
       });
       if (onSuccess) onSuccess();
       // Optionally redirect to bookings page after a short delay
-      setTimeout(() => router.push("/dashboard/bookings"), 1500);
     } catch (error: any) {
       toast.error(
         error.message || "An error occurred while booking. Please try again.",
